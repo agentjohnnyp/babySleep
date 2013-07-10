@@ -10,20 +10,63 @@ $myImage = ImageCreate(300,200);
 $white = ImageColorAllocate($myImage, 0xff, 0xff, 0xff);
 $red = ImageColorAllocate($myImage, 0xff, 0, 0);
 $green = ImageColorAllocate($myImage, 0, 0xff, 0);
+$blue = ImageColorAllocate($myImage, 0, 0, 0xff);
 
 
 
 // Draw a green rectangle around the edge of the screen
-ImageRectangle($myImage, 0, 0, 299, 199, $green);
+ImageRectangle($myImage, 0, 0, 299, 199, $blue);
 
 // Start drawing line on graph
-ImageLine($myImage, 10, 40, 50, 10, $green);
-ImageLine($myImage, 50, 10, 90, 60, $green);
-ImageLine($myImage, 90, 60, 130, 30, $green);
-ImageLine($myImage, 130, 30, 170, 70, $green);
-ImageLine($myImage, 170, 70, 210, 40, $green);
-ImageLine($myImage, 210, 40, 250, 50, $green);
 
+
+
+
+
+$mysqli = new mysqli('localhost', 'root', '', 'babysleep');
+
+if ($mysqli->connect_errno) {
+    echo "***Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error . "***";
+}
+
+if(!($res = $mysqli->query("CALL babysleepsum()")))
+{
+	echo "CALL failed: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+else
+{
+	$x1 = 0;
+	$y1 = 0;
+	$x2 = -30;
+	$y2 = 0;
+	$color = $green;
+	$sleepday = 0;
+	
+	while($row = $res->fetch_assoc())
+	{
+		// We need to graph a line segment
+		//echo $row["babyName"], ", ", $row["sleepday"], ", ",$row["duration"], "\n";
+		$sleepday = $row["sleepday"];
+		if($sleepday == 1 && $y1 != 0)
+		{
+			$x1 = 0;
+			$y1 = 0;
+			$x2 = 10;
+			$color = $red;
+		}
+		else
+		{
+			$x1 = $x2;
+			$y1 = $y2;
+			$x2 += 40;
+		}		
+		$y2 = $row["duration"] /3;
+		if($y1 != 0)
+		{
+			ImageLine($myImage, $x1, $y1, $x2, $y2, $color);
+		}
+	}
+}
 
 // send the bytes of the image
 ImagePng($myImage);
